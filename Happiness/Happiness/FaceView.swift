@@ -10,11 +10,13 @@ import UIKit
 
 class FaceView: UIView
 {
+    //属性观察器，每次属性被设置值的时候都会调用属性观察器,甚至新的值和现在的值相同的时候也不例外。
     var lineWidth: CGFloat = 3 { didSet { setNeedsDisplay() } }
     var color: UIColor = UIColor.blueColor() { didSet { setNeedsDisplay() } }
     var scale: CGFloat = 0.90 { didSet { setNeedsDisplay() } }
     
     var faceCenter: CGPoint {
+        //通过父类来获取自己的中心点
         return convertPoint(center, fromView: superview)
     }
     
@@ -23,6 +25,7 @@ class FaceView: UIView
     }
     
     private struct Scaling {
+        //static 定义类型属性，即可以通过类型名直接访问的属性。
         static let FaceRadiusToEyeRadiusRatio: CGFloat = 10
         static let FaceRadiusToEyeOffsetRatio: CGFloat = 3
         static let FaceRadiusToEyeSeparationRatio: CGFloat = 1.5
@@ -69,16 +72,18 @@ class FaceView: UIView
         return path
     }
     
+    //系统会自动在合适的时机调用该方法，不要自己去调用
     override func drawRect(rect: CGRect) {
         let facePath = UIBezierPath(arcCenter: faceCenter, radius: faceRadius, startAngle: 0, endAngle: CGFloat(2*M_PI), clockwise: true)
         facePath.lineWidth = lineWidth
-        color.set()
+        UIColor.redColor().setStroke()
+        //color.set()//?
         facePath.stroke()
         
         bezierPathForEye(.Left).stroke()
         bezierPathForEye(.Right).stroke()
         
-        let smiliness = 0.75
+        let smiliness = 1.0
         let smilePath = bezierPathForSmile(smiliness)
         smilePath.stroke()
     }
