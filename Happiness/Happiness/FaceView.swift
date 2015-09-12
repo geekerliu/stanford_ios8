@@ -8,11 +8,19 @@
 
 import UIKit
 
+protocol FaceViewDataSource : class{
+    func smilinessForFaceView(sender:FaceView) -> Double?
+}
+
+@IBDesignable //不用运行就可以显示图像
 class FaceView: UIView
 {
     //属性观察器，每次属性被设置值的时候都会调用属性观察器,甚至新的值和现在的值相同的时候也不例外。
+    @IBInspectable //让属性可以直接通过界面设置
     var lineWidth: CGFloat = 3 { didSet { setNeedsDisplay() } }
+    @IBInspectable
     var color: UIColor = UIColor.blueColor() { didSet { setNeedsDisplay() } }
+    @IBInspectable
     var scale: CGFloat = 0.90 { didSet { setNeedsDisplay() } }
     
     var faceCenter: CGPoint {
@@ -23,6 +31,21 @@ class FaceView: UIView
     var faceRadius: CGFloat {
         return min(bounds.size.width, bounds.size.height) / 2 * scale
     }
+    
+    func scale(gesture: UIPinchGestureRecognizer) {
+        if gesture.state == .Changed {
+            scale *= gesture.scale
+            gesture.scale = 1
+        }
+    }
+    
+    /**
+    * delegate 会被设置到 Controller
+    * 而Controler本身已经持有FaceView的引用,这时就会建立起一个双向引用
+    * 所以,我们需要将dataSource 设置为弱引用 weak,当Controller释放掉FaceView时,
+    * FaceView就不会因为有一个强引用的指针指向Controller而无法释放掉
+    */
+    weak var dataSource: FaceViewDataSource?
     
     private struct Scaling {
         //static 定义类型属性，即可以通过类型名直接访问的属性。
@@ -76,14 +99,14 @@ class FaceView: UIView
     override func drawRect(rect: CGRect) {
         let facePath = UIBezierPath(arcCenter: faceCenter, radius: faceRadius, startAngle: 0, endAngle: CGFloat(2*M_PI), clockwise: true)
         facePath.lineWidth = lineWidth
-        UIColor.redColor().setStroke()
-        //color.set()//?
+        color.set()//?
         facePath.stroke()
         
         bezierPathForEye(.Left).stroke()
         bezierPathForEye(.Right).stroke()
         
-        let smiliness = 1.0
+        //通过代理来获取数据
+        let smiliness = dataSource?.smilinessForFaceView(self) ?? 0.0
         let smilePath = bezierPathForSmile(smiliness)
         smilePath.stroke()
     }
